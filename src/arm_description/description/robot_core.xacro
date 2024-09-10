@@ -3,12 +3,11 @@
 
     <xacro:include filename="material.xacro"/>
 
-    <xacro:macro name="arm" params="parent prefix *origin">
+  <link name="world" />
 
-  <joint name="${prefix}base_joint" type="fixed">
-    <xacro:insert_block name="origin" />
-    <parent link="${parent}"/>
-    <child link="${prefix}base_link" />
+  <joint name="base_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link" />
   </joint>
 
   <!-- Constants for robot dimensions -->
@@ -17,9 +16,10 @@
   <xacro:property name="height1" value="2" /> <!-- Link 1 -->
   <xacro:property name="height2" value="1" /> <!-- Link 2 -->
   <xacro:property name="height3" value="1" /> <!-- Link 3 -->
-  
+  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+
   <!-- Base Link -->
-  <link name="${prefix}base_link">
+  <link name="base_link">
     <collision>
       <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
       <geometry>
@@ -45,16 +45,16 @@
       </inertial>
     </link>
 
-    <joint name="${prefix}joint1" type="continuous">
-      <parent link="${prefix}base_link"/>
-      <child link="${prefix}link1"/>
+    <joint name="joint1" type="continuous">
+      <parent link="base_link"/>
+      <child link="link1"/>
       <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
       <dynamics damping="0.7"/>
     </joint>
 
     <!-- Middle Link -->
-    <link name="${prefix}link1">
+    <link name="link1">
       <collision>
         <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
         <geometry>
@@ -80,16 +80,16 @@
         </inertial>
       </link>
 
-      <joint name="${prefix}joint2" type="continuous">
-        <parent link="${prefix}link1"/>
-        <child link="${prefix}link2"/>
+      <joint name="joint2" type="continuous">
+        <parent link="link1"/>
+        <child link="link2"/>
         <origin xyz="0 ${width} ${height2 - axel_offset*2}" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <dynamics damping="0.7"/>
       </joint>
 
       <!-- Top Link -->
-      <link name="${prefix}link2">
+      <link name="link2">
         <collision>
           <origin xyz="0 0 ${height3/2 - axel_offset}" rpy="0 0 0"/>
           <geometry>
@@ -117,19 +117,19 @@
 
 
     <!-- Link1 -->
-    <gazebo reference="${prefix}base_link">
+    <gazebo reference="base_link">
       <material>Gazebo/orange</material>
     </gazebo>
 
     <!-- Link2 -->
-    <gazebo reference="${prefix}link1">
+    <gazebo reference="link1">
       <mu1>0.2</mu1>
       <mu2>0.2</mu2>
       <material>Gazebo/black</material>
     </gazebo>
 
     <!-- Link3 -->
-    <gazebo reference="${prefix}link2">
+    <gazebo reference="link2">
       <mu1>0.2</mu1>
       <mu2>0.2</mu2>
       <material>Gazebo/orange</material>
