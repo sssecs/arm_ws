@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(scservo_driver REQUIRED)
 
 ## COMPILE
 add_library(
@@ -32,11 +33,15 @@ target_include_directories(
   PRIVATE
   include
 )
+
+target_link_libraries(${PROJECT_NAME} scservo_driver)
+
 ament_target_dependencies(
   ${PROJECT_NAME}
   hardware_interface
   pluginlib
   rclcpp
+  scservo_driver
 )
 pluginlib_export_plugin_description_file(hardware_interface arm_hardware.xml)
 
@@ -78,6 +83,5 @@ ament_export_dependencies(
   hardware_interface
   pluginlib
   rclcpp
-  scservo_driver
 )
 ament_package()

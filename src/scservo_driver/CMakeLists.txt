@@ -29,7 +29,7 @@ file(GLOB hdrs include/scservo_driver/*.h)
 file(GLOB srs src/*.cpp)
  
 # define a library target called my_value_converter_library
-add_library(${project} STATIC ${hdrs} ${srs})
+add_library(${project} STATIC ${srs} ${hdrs})
  
 # this line to exports the library
 ament_export_targets(${project} HAS_LIBRARY_TARGET)

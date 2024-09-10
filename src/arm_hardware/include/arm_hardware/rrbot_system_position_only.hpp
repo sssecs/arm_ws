@@ -28,6 +28,8 @@
 #include "rclcpp/macros.hpp"
 #include "arm_hardware/visibility_control.h"
 
+#include "scservo_driver/SCServo.h"
+
 namespace ros2_control_demo_hardware
 {
 class RRBotSystemPositionOnlyHardware
