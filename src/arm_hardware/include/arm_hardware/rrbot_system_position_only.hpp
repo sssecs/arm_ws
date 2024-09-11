@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "hardware_interface/base_interface.hpp"
 #include "hardware_interface/handle.hpp"
@@ -68,6 +69,8 @@ private:
   // Store the command for the simulated robot
   std::vector<double> hw_commands_;
   std::vector<double> hw_states_;
+
+  SMS_STS sm_st_;
 };
 
 }  // namespace ros2_control_demo_hardware

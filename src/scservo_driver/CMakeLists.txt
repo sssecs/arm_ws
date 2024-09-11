@@ -28,7 +28,7 @@ include_directories(include)
  
 # define a library target called my_value_converter_library
 aux_source_directory(src SRC)
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   ${SRC}
 )
  
