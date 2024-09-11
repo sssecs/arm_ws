@@ -33,6 +33,19 @@
 
 namespace ros2_control_demo_hardware
 {
+
+struct JointParams
+{
+  std::string joint_name;
+  u8 motor_id;
+  s16 pos_cmd_raw;
+  s16 pos_act_raw;
+  s16 velo_act_raw;
+  double pos_cmd;
+  double pos_act;
+  double velo_act;
+};
+
 class RRBotSystemPositionOnlyHardware
 : public hardware_interface::BaseInterface<hardware_interface::SystemInterface>
 {
@@ -61,16 +74,20 @@ public:
   hardware_interface::return_type write() override;
 
 private:
-  // Parameters for the RRBot simulation
-  double hw_start_sec_;
-  double hw_stop_sec_;
-  double hw_slowdown_;
+  std::string serial_port_;
+  int baud_rate_;
 
   // Store the command for the simulated robot
-  std::vector<double> hw_commands_;
-  std::vector<double> hw_states_;
+  std::vector<JointParams> joints_params_;
 
-  SMS_STS sm_st_;
+  uint8_t ID_[2] = {1, 2};
+  uint8_t rxPacket_[4];
+
+  s16 Position_[2];
+  u16 Speed_[2] = {2400, 2400};
+  u8 ACC_[2] = {50, 50};
+
+  SMS_STS servo_comm_;
 };
 
 }  // namespace ros2_control_demo_hardware

@@ -33,11 +33,26 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::configure(
     return hardware_interface::return_type::ERROR;
   }
 
-  hw_start_sec_ = stod(info_.hardware_parameters["example_param_hw_start_duration_sec"]);
-  hw_stop_sec_ = stod(info_.hardware_parameters["example_param_hw_stop_duration_sec"]);
-  hw_slowdown_ = stod(info_.hardware_parameters["example_param_hw_slowdown"]);
-  hw_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+
+  serial_port_ = info_.hardware_parameters["serial_port"];
+  baud_rate_ = stoi(info_.hardware_parameters["baud_rate"]);
+
+  joints_params_.resize(info_.joints.size());
+
+  if (info_.joints.size() != 2)
+  {
+    RCLCPP_FATAL(
+      rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
+      "Robot has %d joints found. 2 expected.", 
+      info_.joints.size());
+    return hardware_interface::return_type::ERROR;
+  }
+
+  for (uint i = 0; i < info_.joints.size(); i++)
+  {
+    joints_params_[i].joint_name = info_.joints[i].name;
+    joints_params_[i].motor_id = i + 1;
+  }
 
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
   {
@@ -60,7 +75,7 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::configure(
       return hardware_interface::return_type::ERROR;
     }
 
-    if (joint.state_interfaces.size() != 1)
+    if (joint.state_interfaces.size() != 2)
     {
       RCLCPP_FATAL(
         rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
@@ -77,6 +92,15 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::configure(
         joint.state_interfaces[0].name.c_str(), hardware_interface::HW_IF_POSITION);
       return hardware_interface::return_type::ERROR;
     }
+
+    if (joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
+    {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
+        "Joint '%s' have %s state interface. '%s' expected.", joint.name.c_str(),
+        joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
+      return hardware_interface::return_type::ERROR;
+    }
   }
 
   status_ = hardware_interface::status::CONFIGURED;
@@ -90,7 +114,9 @@ RRBotSystemPositionOnlyHardware::export_state_interfaces()
   for (uint i = 0; i < info_.joints.size(); i++)
   {
     state_interfaces.emplace_back(hardware_interface::StateInterface(
-      info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_states_[i]));
+      joints_params_[i].joint_name, hardware_interface::HW_IF_POSITION, &joints_params_[i].pos_act));
+    state_interfaces.emplace_back(hardware_interface::StateInterface(
+      joints_params_[i].joint_name, hardware_interface::HW_IF_VELOCITY, &joints_params_[i].velo_act));  
   }
 
   return state_interfaces;
@@ -103,7 +129,7 @@ RRBotSystemPositionOnlyHardware::export_command_interfaces()
   for (uint i = 0; i < info_.joints.size(); i++)
   {
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_[i]));
+      joints_params_[i].joint_name, hardware_interface::HW_IF_POSITION, &joints_params_[i].pos_cmd));
   }
 
   return command_interfaces;
@@ -113,27 +139,12 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::start()
 {
   RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Starting ...please wait...");
 
-  for (int i = 0; i < hw_start_sec_; i++)
-  {
-    rclcpp::sleep_for(std::chrono::seconds(1));
-    RCLCPP_INFO(
-      rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "%.1f seconds left...",
-      hw_start_sec_ - i);
-  }
-
-  // set some default values when starting the first time
-  for (uint i = 0; i < hw_states_.size(); i++)
-  {
-    if (std::isnan(hw_states_[i]))
-    {
-      hw_states_[i] = 0;
-      hw_commands_[i] = 0;
+  if(!servo_comm_.begin(baud_rate_, serial_port_.c_str())){
+        RCLCPP_FATAL(
+          rclcpp::get_logger("RRBotSystemPositionOnlyHardware"),
+          "Faill to start serial port");
+        return hardware_interface::return_type::ERROR;
     }
-    else
-    {
-      hw_commands_[i] = hw_states_[i];
-    }
-  }
 
   status_ = hardware_interface::status::STARTED;
 
@@ -147,13 +158,7 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::stop()
 {
   RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Stopping ...please wait...");
 
-  for (int i = 0; i < hw_stop_sec_; i++)
-  {
-    rclcpp::sleep_for(std::chrono::seconds(1));
-    RCLCPP_INFO(
-      rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "%.1f seconds left...",
-      hw_stop_sec_ - i);
-  }
+  servo_comm_.end();
 
   status_ = hardware_interface::status::STOPPED;
 
@@ -167,14 +172,26 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::read()
 {
   RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Reading...");
 
-  for (uint i = 0; i < hw_states_.size(); i++)
-  {
-    // Simulate RRBot's movement
-    hw_states_[i] = hw_states_[i] + (hw_commands_[i] - hw_states_[i]) / hw_slowdown_;
-    RCLCPP_INFO(
-      rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Got state %.5f for joint %d!",
-      hw_states_[i], i);
-  }
+  servo_comm_.syncReadBegin(sizeof(ID_), sizeof(rxPacket_));
+
+  servo_comm_.syncReadPacketTx(ID_, sizeof(ID_), SMS_STS_PRESENT_POSITION_L, sizeof(rxPacket_));//同步读指令包发送
+		for(uint8_t i=0; i<sizeof(ID_); i++){
+			//接收ID[i]同步读返回包
+			if(!servo_comm_.syncReadPacketRx(ID_[i], rxPacket_)){
+				std::cout<<"ID:"<<(int)ID_[i]<<" sync read error!"<<std::endl;
+				continue;//接收解码失败
+			}
+			joints_params_[i].pos_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
+			joints_params_[i].velo_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
+
+      joints_params_[i].pos_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * 360 - 180;
+      joints_params_[i].velo_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * 360 - 180;
+
+			std::cout<<"ID:"<<int(ID_[i])<<" Position:"<<joints_params_[i].pos_act_raw<<" Speed:"<<joints_params_[i].velo_act_raw<<std::endl;
+		}
+  
+  servo_comm_.syncReadEnd();
+
   RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Joints successfully read!");
 
   return hardware_interface::return_type::OK;
@@ -184,13 +201,13 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::write()
 {
   RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Writing...");
 
-  for (uint i = 0; i < hw_commands_.size(); i++)
+  for(uint8_t i=0; i<sizeof(ID_); i++)
   {
-    // Simulate sending commands to the hardware
-    RCLCPP_INFO(
-      rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Got command %.5f for joint %d!",
-      hw_commands_[i], i);
+    Position_[i] = static_cast<int16_t>(joints_params_[i].pos_cmd+180)/360 * 4095;
   }
+
+  servo_comm_.SyncWritePosEx(ID_, sizeof(ID_), Position_, Speed_, ACC_);
+
   RCLCPP_INFO(
     rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Joints successfully written!");
 
