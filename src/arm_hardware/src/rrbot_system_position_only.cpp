@@ -170,7 +170,6 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::stop()
 
 hardware_interface::return_type RRBotSystemPositionOnlyHardware::read()
 {
-  RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Reading...");
 
   servo_comm_.syncReadBegin(sizeof(ID_), sizeof(rxPacket_));
 
@@ -184,32 +183,29 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::read()
 			joints_params_[i].pos_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
 			joints_params_[i].velo_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
 
-      joints_params_[i].pos_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * 360 - 180;
-      joints_params_[i].velo_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * 360 - 180;
-
-			std::cout<<"ID:"<<int(ID_[i])<<" Position:"<<joints_params_[i].pos_act_raw<<" Speed:"<<joints_params_[i].velo_act_raw<<std::endl;
+      joints_params_[i].pos_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * pi - pi/2;
+      joints_params_[i].velo_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * pi;
 		}
   
   servo_comm_.syncReadEnd();
 
-  RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Joints successfully read!");
+  RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Pos1 : %f    Pos2 : %f", joints_params_[0].pos_act, joints_params_[1].pos_act  );
 
   return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type RRBotSystemPositionOnlyHardware::write()
 {
-  RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Writing...");
 
   for(uint8_t i=0; i<sizeof(ID_); i++)
   {
-    Position_[i] = static_cast<int16_t>(joints_params_[i].pos_cmd+180)/360 * 4095;
+    Position_[i] = static_cast<int16_t>(joints_params_[i].pos_cmd+pi/2)/pi * 4095;
   }
 
   servo_comm_.SyncWritePosEx(ID_, sizeof(ID_), Position_, Speed_, ACC_);
 
   RCLCPP_INFO(
-    rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Joints successfully written!");
+    rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "cmd1 : %f    cmd2 : %f", joints_params_[0].pos_cmd, joints_params_[1].pos_cmd  );
 
   return hardware_interface::return_type::OK;
 }

@@ -31,6 +31,8 @@
 
 #include "scservo_driver/SCServo.h"
 
+#define pi 3.1415926
+
 namespace arm_hardware
 {
 
