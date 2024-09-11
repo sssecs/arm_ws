@@ -37,13 +37,6 @@ def generate_launch_description():
                                    '-entity', 'arm'],
                         output='screen')
 
-
-    forward_position_spawner = Node(
-        package="controller_manager",
-        executable="spawner.py",
-        arguments=["forward_position_controller"],
-    )
-
     joint_trajectory_spawner = Node(
         package="controller_manager",
         executable="spawner.py",

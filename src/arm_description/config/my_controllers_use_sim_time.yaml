@@ -1,0 +1,7 @@
+controller_manager:
+  ros__parameters:
+    use_sim_time: true
+
+joint_trajectory_position_controller:
+  ros__parameters:
+    use_sim_time: true
