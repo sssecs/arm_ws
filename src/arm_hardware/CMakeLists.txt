@@ -34,8 +34,6 @@ target_include_directories(
   include
 )
 
-target_link_libraries(${PROJECT_NAME} scservo_driver)
-
 ament_target_dependencies(
   ${PROJECT_NAME}
   hardware_interface

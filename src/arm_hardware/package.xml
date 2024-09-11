@@ -8,14 +8,18 @@
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  
+  <depend>scservo_driver</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   
-  <depend>hardware_interface</depend>
-  <depend>pluginlib</depend>
-  <depend>rclcpp</depend>
-  <depend>scservo_driver</depend>
+
+
 
   <export>
     <build_type>ament_cmake</build_type>
