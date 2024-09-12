@@ -41,7 +41,7 @@ struct JointParams
   std::string joint_name;
   u8 motor_id;
   s16 pos_cmd_raw;
-  s16 pos_act_raw;
+  int16_t pos_act_raw;
   s16 velo_act_raw;
   double pos_cmd;
   double pos_act;

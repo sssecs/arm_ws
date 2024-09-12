@@ -174,22 +174,22 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::read()
   servo_comm_.syncReadBegin(sizeof(ID_), sizeof(rxPacket_));
 
   servo_comm_.syncReadPacketTx(ID_, sizeof(ID_), SMS_STS_PRESENT_POSITION_L, sizeof(rxPacket_));//同步读指令包发送
-		for(uint8_t i=0; i<sizeof(ID_); i++){
-			//接收ID[i]同步读返回包
-			if(!servo_comm_.syncReadPacketRx(ID_[i], rxPacket_)){
-				std::cout<<"ID:"<<(int)ID_[i]<<" sync read error!"<<std::endl;
-				continue;//接收解码失败
-			}
-			joints_params_[i].pos_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
-			joints_params_[i].velo_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
+  for(uint8_t i=0; i<sizeof(ID_); i++){
+    //接收ID[i]同步读返回包
+    if(!servo_comm_.syncReadPacketRx(ID_[i], rxPacket_)){
+        RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Sync read error, ID : %d", ID_[i] );
+    }
+    joints_params_[i].pos_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
+    joints_params_[i].velo_act_raw = servo_comm_.syncReadRxPacketToWrod(15);//解码两个字节 bit15为方向位,参数=0表示无方向位
 
-      joints_params_[i].pos_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * pi - pi/2;
-      joints_params_[i].velo_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * pi;
-		}
+    joints_params_[i].pos_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * 2 * pi - pi;
+    joints_params_[i].velo_act = static_cast<float>(joints_params_[i].pos_act_raw)/4096.0 * 2 * pi;
+  }
   
   servo_comm_.syncReadEnd();
 
-  RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Pos1 : %f    Pos2 : %f", joints_params_[0].pos_act, joints_params_[1].pos_act  );
+  RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Pos1 : %f    Pos2 : %f    Raw1 : %d   Raw2: %d", 
+  joints_params_[0].pos_act, joints_params_[1].pos_act, joints_params_[0].pos_act_raw, joints_params_[1].pos_act_raw  );
 
   return hardware_interface::return_type::OK;
 }
@@ -199,13 +199,14 @@ hardware_interface::return_type RRBotSystemPositionOnlyHardware::write()
 
   for(uint8_t i=0; i<sizeof(ID_); i++)
   {
-    Position_[i] = static_cast<int16_t>(joints_params_[i].pos_cmd+pi/2)/pi * 4095;
+    Position_[i] = static_cast<int16_t>( (joints_params_[i].pos_cmd+pi)/pi/2 * 4095.0);
   }
 
   servo_comm_.SyncWritePosEx(ID_, sizeof(ID_), Position_, Speed_, ACC_);
 
   RCLCPP_INFO(
-    rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "cmd1 : %f    cmd2 : %f", joints_params_[0].pos_cmd, joints_params_[1].pos_cmd  );
+    rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "cmd1 : %f    cmd2 : %f    Raw1 : %d   Raw2: %d",
+    joints_params_[0].pos_cmd, joints_params_[1].pos_cmd, Position_[0], Position_[1]  );
 
   return hardware_interface::return_type::OK;
 }
