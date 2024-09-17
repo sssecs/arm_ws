@@ -1,138 +1,152 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:include filename="$(find udarm_description)/description/material.xacro"/>
+    <xacro:include filename="$(find udarm_description)/description/inertial_macros.xacro"/>
+    <xacro:include filename="$(find udarm_description)/description/udarm_transmission.xacro"/>
+    
+    <link name="world" />
 
-  <xacro:include filename="material.xacro"/>
+    <joint name="base_joint" type="fixed">
+        <parent link="world"/>
+        <child link="base_link" />
+        <origin xyz="0 0 1" rpy="${pi/2} 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
 
-  <link name="world" />
+    <link name="base_link">
+        <inertial>
+            <mass value="0.001" />
+            <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01" />
+        </inertial>
+    </link>
 
-  <joint name="base_joint" type="fixed">
-    <parent link="world"/>
-    <child link="base_link" />
-  </joint>
+    <joint name="joint1" type="revolute">
+        <parent link="base_link"/>
+        <child link="link1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-1.5" upper="3.14" effort="1000" velocity="0.5"/>
+    </joint>
 
-  <!-- Constants for robot dimensions -->
-  <xacro:property name="mass" value="1" /> <!-- arbitrary value for mass -->
-  <xacro:property name="width" value="0.1" /> <!-- Square dimensions (widthxwidth) of beams -->
-  <xacro:property name="height1" value="2" /> <!-- Link 1 -->
-  <xacro:property name="height2" value="1" /> <!-- Link 2 -->
-  <xacro:property name="height3" value="1" /> <!-- Link 3 -->
-  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+    <link name="link1">
+        <collision>
+            <origin xyz="0.1 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.2 0.015 0.015"/>
+            </geometry>
+        </collision>
 
-  <!-- Base Link -->
-  <link name="base_link">
-    <collision>
-      <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height1}"/>
-      </geometry>
-    </collision>
+        <visual>
+            <origin xyz="0.1175 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.235 0.015 0.015"/>
+            </geometry>
+            <material name="orange"/>
+        </visual>
 
-    <visual>
-      <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height1}"/>
-      </geometry>
-      <material name="orange"/>
-    </visual>
+        <xacro:inertial_box mass="0.3" x="0.1" y="0.015" z="0.015">
+            <origin xyz="0.2 0 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
 
-    <inertial>
-      <origin xyz="0 0 ${height1/2}" rpy="0 0 0"/>
-      <mass value="${mass}"/>
-      <inertia
-        ixx="${mass / 12.0 * (width*width + height1*height1)}" ixy="0.0" ixz="0.0"
-        iyy="${mass / 12.0 * (height1*height1 + width*width)}" iyz="0.0"
-        izz="${mass / 12.0 * (width*width + width*width)}"/>
-    </inertial>
-  </link>
+    <gazebo reference='link1'>
+        <material>
+            Gazebo/Orange
+        </material>
+    </gazebo>
 
-  <gazebo reference='base_link'>
-    <material>Gazebo/Orange</material>
-  </gazebo>
+    <joint name="joint2" type="revolute">
+        <parent link="link1"/>
+        <child link="link2" />
+        <origin xyz="0.235 0.015 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-1.5" upper="3" effort="1000" velocity="0.5"/>
+    </joint>
 
-  <joint name="joint1" type="continuous">
-    <parent link="base_link"/>
-    <child link="link1"/>
-    <origin xyz="0 ${width} ${height1 - axel_offset}" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.7"/>
-  </joint>
+    <link name="link2">
+        <collision>
+            <origin xyz="0.1 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.2 0.015 0.015"/>
+            </geometry>
+        </collision>
 
-    <!-- Middle Link -->
-  <link name="link1">
-    <collision>
-      <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height2}"/>
-      </geometry>
-    </collision>
+        <visual>
+            <origin xyz="0.11 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.22 0.015 0.015"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
 
-    <visual>
-      <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height2}"/>
-      </geometry>
-      <material name="yellow"/>
-    </visual>
+        <xacro:inertial_box mass="0.3" x="0.22" y="0.015" z="0.015">
+            <origin xyz="0.11 0 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
 
-    <inertial>
-      <origin xyz="0 0 ${height2/2 - axel_offset}" rpy="0 0 0"/>
-      <mass value="${mass}"/>
-      <inertia
-        ixx="${mass / 12.0 * (width*width + height2*height2)}" ixy="0.0" ixz="0.0"
-        iyy="${mass / 12.0 * (height2*height2 + width*width)}" iyz="0.0"
-        izz="${mass / 12.0 * (width*width + width*width)}"/>
-    </inertial>
-  </link>
+    <gazebo reference='link2'>
+        <material>
+            Gazebo/White
+        </material>
+    </gazebo>
 
-  <gazebo reference="link1">
-    <mu1 value="0.2"/>
-    <mu2 value="0.2"/>
-    <material>Gazebo/Black</material>
-  </gazebo>
+    <joint name="joint3" type="revolute">
+        <parent link="link2"/>
+        <child link="link3" />
+        <origin xyz="0.22 0.0 0" rpy="-${pi/2} -${pi/2} 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-1.5" upper="3.15" effort="1000" velocity="0.5"/>
+    </joint>
 
+    <link name="link3">
 
-  <joint name="joint2" type="continuous">
-    <parent link="link1"/>
-    <child link="link2"/>
-    <origin xyz="0 ${width} ${height2 - axel_offset*2}" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
-    <dynamics damping="0.7"/>
-  </joint>
+        <collision>
+            <origin xyz="0.06 0.04625 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.015 0.1075 0.015"/>
+            </geometry>
+        </collision>
 
-  <!-- Top Link -->
-  <link name="link2">
-    <collision>
-      <origin xyz="0 0 ${height3/2 - axel_offset}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height3}"/>
-      </geometry>
-    </collision>
+        <visual>
+            <origin xyz="0.02625 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.0525 0.015 0.015"/>
+            </geometry>
+            <material name="orange"/>
+        </visual>
 
-    <visual>
-      <origin xyz="0 0 ${height3/2 - axel_offset}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${width} ${width} ${height3}"/>
-      </geometry>
-      <material name="orange"/>
-    </visual>
+        <visual>
+            <origin xyz="0.06 0.04625 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.015 0.1075 0.015"/>
+            </geometry>
+            <material name="orange"/>
+        </visual>
 
-    <inertial>
-      <origin xyz="0 0 ${height3/2 - axel_offset}" rpy="0 0 0"/>
-      <mass value="${mass}"/>
-      <inertia
-        ixx="${mass / 12.0 * (width*width + height3*height3)}" ixy="0.0" ixz="0.0"
-        iyy="${mass / 12.0 * (height3*height3 + width*width)}" iyz="0.0"
-        izz="${mass / 12.0 * (width*width + width*width)}"/>
-    </inertial>
-  </link>
+        <xacro:inertial_box mass="0.3" x="0.015" y="0.1075" z="0.015">
+            <origin xyz="0.06 0.04625 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
 
-  <gazebo reference="link2">
-    <mu1 value="0.2"/>
-    <mu2 value="0.2"/>
-    <material>Gazebo/Orange</material>
-  </gazebo>
+    <gazebo reference='link3'>
+        <material>
+            Gazebo/Orange
+        </material>
+    </gazebo>
 
+    <joint name="eef_joint" type="fixed">
+        <parent link="link3"/>
+        <child link="eef" />
+        <origin xyz="0.06 0.1 0" rpy="-${pi/2} 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
 
+    <link name="eef">
+        <inertial>
+            <mass value="0.001" />
+            <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01" />
+        </inertial>
+    </link>
 
 
 </robot>
