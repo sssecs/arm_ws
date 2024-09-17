@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:include filename="$(find udarm_description)/description/material.xacro"/>
-    <xacro:include filename="$(find udarm_description)/description/inertial_macros.xacro"/>
-    <xacro:include filename="$(find udarm_description)/description/udarm_transmission.xacro"/>
+    <xacro:include filename="$(find arm_description)/description/material.xacro"/>
+    <xacro:include filename="$(find arm_description)/description/inertial_macros.xacro"/>
     
     <link name="world" />
 
@@ -14,10 +13,6 @@
     </joint>
 
     <link name="base_link">
-        <inertial>
-            <mass value="0.001" />
-            <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01" />
-        </inertial>
     </link>
 
     <joint name="joint1" type="revolute">
@@ -142,10 +137,6 @@
     </joint>
 
     <link name="eef">
-        <inertial>
-            <mass value="0.001" />
-            <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01" />
-        </inertial>
     </link>
 
 
