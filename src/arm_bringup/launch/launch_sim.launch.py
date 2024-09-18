@@ -56,7 +56,6 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
-        # forward_position_spawner,
         joint_trajectory_spawner,
         joint_broad_spawner
     ])

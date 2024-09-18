@@ -3,10 +3,28 @@
     <xacro:include filename="$(find arm_description)/description/material.xacro"/>
     <xacro:include filename="$(find arm_description)/description/inertial_macros.xacro"/>
     
-    <link name="world" />
+    <link name="world"/>
+
+    <joint name="world_joint" type="fixed">
+        <parent link="world"/>
+        <child link="world_link" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <link name="world_link">
+        <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.001"/>
+        <inertia
+            ixx="0.001" ixy="0.0" ixz="0.0"
+            iyy="0.001" iyz="0.0"
+            izz="0.001"/>
+        </inertial>
+    </link>
 
     <joint name="base_joint" type="fixed">
-        <parent link="world"/>
+        <parent link="world_link"/>
         <child link="base_link" />
         <origin xyz="0 0 1" rpy="${pi/2} 0 0"/>
         <axis xyz="0 0 1"/>
