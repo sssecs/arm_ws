@@ -31,6 +31,15 @@
           <state_interface name="position"/>
           <state_interface name="velocity"/>
         </joint>
+
+        <joint name="joint3">
+            <command_interface name="position">
+              <param name="min">-3.14</param>
+              <param name="max">3.14</param>
+            </command_interface>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+          </joint>
       </ros2_control>
     </xacro:if>
 
@@ -58,6 +67,15 @@
           <state_interface name="position"/>
           <state_interface name="velocity"/>
         </joint>
+
+        <joint name="joint3">
+            <command_interface name="position">
+              <param name="min">-3.14</param>
+              <param name="max">3.14</param>
+            </command_interface>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+          </joint>
       </ros2_control>
     </xacro:unless>
 
