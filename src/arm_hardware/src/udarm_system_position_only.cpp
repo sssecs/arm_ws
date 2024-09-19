@@ -25,6 +25,22 @@
 
 namespace arm_hardware
 {
+  void Motor::Init(s16 count_zero, int direction)
+  {
+    this->count_zero_ = count_zero;
+    this->direction_ = direction;
+  }
+
+  double Motor::Count2Rad(s16 count_in)
+  {
+    return static_cast<float>(this->direction_ * (count_in - this->count_zero_)) / 4096.0 * 2 * pi;
+  }
+
+  s16 Motor::Rad2Count(double rad_in)
+  {
+    return (static_cast<int16_t>(rad_in / pi / 2 * 4096) - this->count_zero_) * this->direction_;
+  }
+
   hardware_interface::CallbackReturn UDArmSystemPositionOnlyHardware::on_init(
       const hardware_interface::HardwareInfo &info)
   {
@@ -37,6 +53,13 @@ namespace arm_hardware
 
     serial_port_ = info_.hardware_parameters["serial_port"];
     baud_rate_ = stoi(info_.hardware_parameters["baud_rate"]);
+
+    motors_.resize(4);
+
+    motors_[0].Init(stoi(info_.hardware_parameters["motor1_zero"]), stoi(info_.hardware_parameters["motor1_direction"]));
+    motors_[1].Init(stoi(info_.hardware_parameters["motor2_zero"]), stoi(info_.hardware_parameters["motor2_direction"]));
+    motors_[2].Init(stoi(info_.hardware_parameters["motor3_zero"]), stoi(info_.hardware_parameters["motor3_direction"]));
+    motors_[3].Init(stoi(info_.hardware_parameters["motor4_zero"]), stoi(info_.hardware_parameters["motor4_direction"]));
 
     joints_params_.resize(info_.joints.size());
 
@@ -153,6 +176,13 @@ namespace arm_hardware
   hardware_interface::CallbackReturn UDArmSystemPositionOnlyHardware::on_activate(
       const rclcpp_lifecycle::State & /*previous_state*/)
   {
+    if (!servo_comm_.begin(baud_rate_, serial_port_.c_str()))
+    {
+      RCLCPP_FATAL(
+          rclcpp::get_logger("UDArmSystemPositionOnlyHardware"),
+          "Faill to start serial port");
+      return hardware_interface::CallbackReturn::ERROR;
+    }
     RCLCPP_INFO(rclcpp::get_logger("UDArmSystemPositionOnlyHardware"), "Successfully activated!");
 
     return hardware_interface::CallbackReturn::SUCCESS;
@@ -162,8 +192,8 @@ namespace arm_hardware
       const rclcpp_lifecycle::State & /*previous_state*/)
   {
 
+    servo_comm_.end();
     RCLCPP_INFO(rclcpp::get_logger("UDArmSystemPositionOnlyHardware"), "Successfully deactivated!");
-    // END: This part here is for exemplary purposes - Please do not copy to your production code
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -171,13 +201,46 @@ namespace arm_hardware
   hardware_interface::return_type UDArmSystemPositionOnlyHardware::read(
       const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
-    // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
-    RCLCPP_INFO(rclcpp::get_logger("UDArmSystemPositionOnlyHardware"), "Reading...");
 
-    for (uint i = 0; i < info_.joints.size(); i++)
+    servo_comm_.syncReadBegin(sizeof(ID_), sizeof(rxPacket_));
+
+    servo_comm_.syncReadPacketTx(ID_, sizeof(ID_), SMS_STS_PRESENT_POSITION_L, sizeof(rxPacket_)); // 同步读指令包发送
+    for (uint8_t i = 0; i < sizeof(ID_); i++)
     {
-      joints_params_[i].pos_act = pos_test_[i];
+      // 接收ID[i]同步读返回包
+      if (!servo_comm_.syncReadPacketRx(ID_[i], rxPacket_))
+      {
+        RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Sync read error, ID : %d", ID_[i]);
+        continue;
+      }
+
+      count_read_buffer_[i] = servo_comm_.syncReadRxPacketToWrod(15);
+      pos_read_buffer_[i] = motors_[i].Count2Rad(count_read_buffer_[i]);
+
+      switch (ID_[i])
+      {
+      case 1:
+        joints_params_[0].pos_act = (pos_read_buffer_[0] + pos_read_buffer_[1]) / 2;
+        break;
+
+      case 2:
+        break;
+
+      case 3:
+        joints_params_[1].pos_act = pos_read_buffer_[2];
+        break;
+
+      case 4:
+        joints_params_[2].pos_act = pos_read_buffer_[3];
+        break;
+      }
     }
+
+    servo_comm_.syncReadEnd();
+
+    RCLCPP_INFO(rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Pos1 : %f, Pos2 : %f, Pos3 : %f, Pos4: %f, Raw1: %d, Raw2: %d, Raw3: %d, Raw4: %d",
+                pos_read_buffer_[0], pos_read_buffer_[1], pos_read_buffer_[2], pos_read_buffer_[3],
+                count_read_buffer_[0], count_read_buffer_[1], count_read_buffer_[2], count_read_buffer_[3]);
 
     return hardware_interface::return_type::OK;
   }
@@ -186,16 +249,11 @@ namespace arm_hardware
       const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
     // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
-    RCLCPP_INFO(rclcpp::get_logger("UDArmSystemPositionOnlyHardware"), "Writing...");
 
     for (uint i = 0; i < info_.joints.size(); i++)
     {
       pos_test_[i] = joints_params_[i].pos_cmd;
     }
-
-    RCLCPP_INFO(
-        rclcpp::get_logger("UDArmSystemPositionOnlyHardware"), "Joints successfully written!");
-    // END: This part here is for exemplary purposes - Please do not copy to your production code
 
     return hardware_interface::return_type::OK;
   }

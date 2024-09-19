@@ -1,83 +1,94 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:if value="$(arg use_sim_time)">
-      <gazebo>
-        <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
-          <parameters>$(find arm_description)/config/my_controllers.yaml</parameters>
-          <parameters>$(find arm_description)/config/my_controllers_use_sim_time.yaml</parameters>
-        </plugin>
-      </gazebo>
+  <xacro:if value="$(arg use_sim_time)">
+    <gazebo>
+      <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+        <parameters>$(find arm_description)/config/my_controllers.yaml</parameters>
+        <parameters>$(find arm_description)/config/my_controllers_use_sim_time.yaml</parameters>
+      </plugin>
+    </gazebo>
 
-      <ros2_control name="GazeboSimSystem" type="system">
-          <hardware>
-              <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-          </hardware>
+    <ros2_control name="GazeboSimSystem" type="system">
+      <hardware>
+        <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      </hardware>
 
-          <joint name="joint1">
-            <command_interface name="position">
-              <param name="min">-3.14</param>
-              <param name="max">3.14</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-          </joint>
-          
-        <joint name="joint2">
-          <command_interface name="position">
-            <param name="min">-3.14</param>
-            <param name="max">3.14</param>
-          </command_interface>
-          <state_interface name="position"/>
-          <state_interface name="velocity"/>
-        </joint>
+      <joint name="joint1">
+        <command_interface name="position">
+          <param name="min">-1.52</param>
+          <param name="max">1.52</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
 
-        <joint name="joint3">
-            <command_interface name="position">
-              <param name="min">-3.14</param>
-              <param name="max">3.14</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-          </joint>
-      </ros2_control>
-    </xacro:if>
+      <joint name="joint2">
+        <command_interface name="position">
+          <param name="min">-0.5</param>
+          <param name="max">3.14</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
 
-    <xacro:unless value="$(arg use_sim_time)">
-      <ros2_control name="RealSystem" type="system">
-          <hardware>
-              <plugin>arm_hardware/UDArmSystemPositionOnlyHardware</plugin>
-              <param name="baud_rate">1000000</param>
-              <param name="serial_port">/dev/ttyUSB0</param>
-          </hardware>
-          <joint name="joint1">
-            <command_interface name="position">
-              <param name="min">-3.14</param>
-              <param name="max">3.14</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-          </joint>
-          
-        <joint name="joint2">
-          <command_interface name="position">
-            <param name="min">-3.14</param>
-            <param name="max">3.14</param>
-          </command_interface>
-          <state_interface name="position"/>
-          <state_interface name="velocity"/>
-        </joint>
+      <joint name="joint3">
+        <command_interface name="position">
+          <param name="min">-0.78</param>
+          <param name="max">1.5</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+    </ros2_control>
+  </xacro:if>
 
-        <joint name="joint3">
-            <command_interface name="position">
-              <param name="min">-3.14</param>
-              <param name="max">3.14</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-          </joint>
-      </ros2_control>
-    </xacro:unless>
+  <xacro:unless value="$(arg use_sim_time)">
+    <ros2_control name="RealSystem" type="system">
+      <hardware>
+        <plugin>arm_hardware/UDArmSystemPositionOnlyHardware</plugin>
+        <param name="baud_rate">1000000</param>
+        <param name="serial_port">/dev/ttyUSB0</param>
+
+        <param name="motor1_zero">2010</param>
+        <param name="motor2_zero">2070</param>
+        <param name="motor3_zero">1870</param>
+        <param name="motor4_zero">1140</param>
+
+        <param name="motor1_direction">1</param>
+        <param name="motor2_direction">-1</param>
+        <param name="motor3_direction">1</param>
+        <param name="motor4_direction">1</param>
+
+      </hardware>
+      <joint name="joint1">
+        <command_interface name="position">
+          <param name="min">-1.52</param>
+          <param name="max">1.52</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+
+      <joint name="joint2">
+        <command_interface name="position">
+          <param name="min">-0.5</param>
+          <param name="max">3.14</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+
+      <joint name="joint3">
+        <command_interface name="position">
+          <param name="min">-0.78</param>
+          <param name="max">1.5</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+    </ros2_control>
+  </xacro:unless>
 
 </robot>
     

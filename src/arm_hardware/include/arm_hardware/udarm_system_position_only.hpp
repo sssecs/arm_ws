@@ -42,6 +42,18 @@ namespace arm_hardware
     double velo_act;
   };
 
+  class Motor
+  {
+  public:
+    void Init(s16 count_zero, int direction);
+    s16 Rad2Count(double rad_in);
+    double Count2Rad(s16 count_in);
+
+  private:
+    s16 count_zero_;
+    int direction_;
+  };
+
   class UDArmSystemPositionOnlyHardware : public hardware_interface::SystemInterface
   {
   public:
@@ -75,6 +87,7 @@ namespace arm_hardware
 
     // Store the command for the simulated robot
     std::vector<JointParams> joints_params_;
+    std::vector<Motor> motors_;
 
     uint8_t ID_[4] = {1, 2, 3, 4};
     uint8_t rxPacket_[4];
@@ -86,6 +99,9 @@ namespace arm_hardware
     SMS_STS servo_comm_;
 
     double pos_test_[3] = {0, 0, 0};
+
+    s16 count_read_buffer_[4] = {0, 0, 0, 0};
+    double pos_read_buffer_[4] = {0, 0, 0, 0};
   };
 
 } // namespace arm_hardware
