@@ -38,7 +38,7 @@ namespace arm_hardware
 
   s16 Motor::Rad2Count(double rad_in)
   {
-    return (static_cast<int16_t>(rad_in / pi / 2 * 4096) - this->count_zero_) * this->direction_;
+    return (static_cast<int16_t>(rad_in / pi / 2 * 4096) ) * this->direction_ + this->count_zero_;
   }
 
   hardware_interface::CallbackReturn UDArmSystemPositionOnlyHardware::on_init(
@@ -220,7 +220,7 @@ namespace arm_hardware
       switch (ID_[i])
       {
       case 1:
-        joints_params_[0].pos_act = (pos_read_buffer_[0] + pos_read_buffer_[1]) / 2;
+        joints_params_[0].pos_act = pos_read_buffer_[0];
         break;
 
       case 2:
@@ -248,12 +248,33 @@ namespace arm_hardware
   hardware_interface::return_type UDArmSystemPositionOnlyHardware::write(
       const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
-    // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
-
-    for (uint i = 0; i < info_.joints.size(); i++)
+    for (uint8_t i = 0; i < sizeof(ID_); i++)
     {
-      pos_test_[i] = joints_params_[i].pos_cmd;
+      switch (ID_[i])
+      {
+      case 1:
+        Position_[0] = motors_[0].Rad2Count(joints_params_[0].pos_cmd);
+        break;
+
+      case 2:
+        Position_[1] = motors_[1].Rad2Count(joints_params_[0].pos_cmd);
+        break;
+
+      case 3:
+        Position_[2] = motors_[2].Rad2Count(joints_params_[1].pos_cmd);
+        break;
+
+      case 4:
+        Position_[3] = motors_[3].Rad2Count(joints_params_[2].pos_cmd);
+        break;
+      }
     }
+
+    servo_comm_.SyncWritePosEx(ID_, sizeof(ID_), Position_, Speed_, ACC_);
+
+    RCLCPP_INFO(
+        rclcpp::get_logger("RRBotSystemPositionOnlyHardware"), "Cmd1 : %d, Cmd2: %d, Cmd3: %d, Cmd4: %d,  ",
+        Position_[0], Position_[1], Position_[2], Position_[3]);
 
     return hardware_interface::return_type::OK;
   }
