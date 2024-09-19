@@ -1,0 +1,9 @@
+<library path="arm_hardware">
+  <class name="arm_hardware/UDArmSystemPositionOnlyHardware"
+         type="arm_hardware::UDArmSystemPositionOnlyHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      
+    </description>
+  </class>
+</library>

@@ -46,7 +46,7 @@
     <xacro:unless value="$(arg use_sim_time)">
       <ros2_control name="RealSystem" type="system">
           <hardware>
-              <plugin>arm_hardware/RRBotSystemPositionOnlyHardware</plugin>
+              <plugin>arm_hardware/UDArmSystemPositionOnlyHardware</plugin>
               <param name="baud_rate">1000000</param>
               <param name="serial_port">/dev/ttyUSB0</param>
           </hardware>

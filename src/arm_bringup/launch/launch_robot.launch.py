@@ -44,13 +44,13 @@ def generate_launch_description():
 
     joint_trajectory_spawner = Node(
         package="controller_manager",
-        executable="spawner.py",
+        executable="spawner",
         arguments=["joint_trajectory_position_controller"],
     )
 
     joint_broad_spawner = Node(
         package="controller_manager",
-        executable="spawner.py",
+        executable="spawner",
         arguments=["joint_state_broadcaster"],
     )
 
