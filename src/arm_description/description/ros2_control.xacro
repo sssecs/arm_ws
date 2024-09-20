@@ -50,10 +50,10 @@
         <param name="baud_rate">1000000</param>
         <param name="serial_port">/dev/ttyUSB0</param>
 
-        <param name="motor1_zero">2010</param>
-        <param name="motor2_zero">2070</param>
-        <param name="motor3_zero">1870</param>
-        <param name="motor4_zero">1140</param>
+        <param name="motor1_zero">2040</param>
+        <param name="motor2_zero">2030</param>
+        <param name="motor3_zero">1940</param>
+        <param name="motor4_zero">1125</param>
 
         <param name="motor1_direction">1</param>
         <param name="motor2_direction">-1</param>
