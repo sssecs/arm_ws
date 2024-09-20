@@ -125,60 +125,13 @@ int main(int argc, char** argv)
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
   visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
 
-  // .. _move_group_interface-planning-to-pose-goal:
-  //
-  // Planning to a Pose goal
-  // ^^^^^^^^^^^^^^^^^^^^^^^
-  // We can plan a motion for this group to a desired pose for the
-  // end-effector.
-  geometry_msgs::msg::Pose target_pose1;
-  target_pose1.orientation.w = 1.0;
-  target_pose1.position.x = 0.28;
-  target_pose1.position.y = -0.2;
-  target_pose1.position.z = 0.5;
-  move_group.setPoseTarget(target_pose1);
 
   // Now, we call the planner to compute the plan and visualize it.
   // Note that we are just planning, not asking move_group
   // to actually move the robot.
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
 
-  bool success = (move_group.plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
-
-  RCLCPP_INFO(LOGGER, "Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
-
-  // Visualizing plans
-  // ^^^^^^^^^^^^^^^^^
-  // We can also visualize the plan as a line with markers in RViz.
-  RCLCPP_INFO(LOGGER, "Visualizing plan 1 as trajectory line");
-  visual_tools.publishAxisLabeled(target_pose1, "pose1");
-  visual_tools.publishText(text_pose, "Pose_Goal", rvt::WHITE, rvt::XLARGE);
-  visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-  visual_tools.trigger();
-  visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
-
-  // Moving to a pose goal
-  // ^^^^^^^^^^^^^^^^^^^^^
-  //
-  // Moving to a pose goal is similar to the step above
-  // except we now use the ``move()`` function. Note that
-  // the pose goal we had set earlier is still active
-  // and so the robot will try to move to that goal. We will
-  // not use that function in this tutorial since it is
-  // a blocking function and requires a controller to be active
-  // and report success on execution of a trajectory.
-
-  /* Uncomment below line when working with a real robot */
-  /* move_group.move(); */
-
-  // Planning to a joint-space goal
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  //
-  // Let's set a joint space goal and move towards it.  This will replace the
-  // pose target we set above.
-  //
-  // To start, we'll create an pointer that references the current robot's state.
-  // RobotState is the object that contains all the current position/velocity/acceleration data.
+  
   moveit::core::RobotStatePtr current_state = move_group.getCurrentState(10);
   //
   // Next get the current set of joint values for the group.
@@ -193,23 +146,22 @@ int main(int argc, char** argv)
     RCLCPP_WARN(LOGGER, "Target joint position(s) were outside of limits, but we will plan and clamp to the limits ");
   }
 
-  // We lower the allowed maximum velocity and acceleration to 5% of their maximum.
-  // The default values are 10% (0.1).
-  // Set your preferred defaults in the joint_limits.yaml file of your robot's moveit_config
-  // or set explicit factors in your code if you need your robot to move faster.
-  move_group.setMaxVelocityScalingFactor(0.05);
-  move_group.setMaxAccelerationScalingFactor(0.05);
+  move_group.setMaxVelocityScalingFactor(0.1);
+  move_group.setMaxAccelerationScalingFactor(0.1);
 
-  success = (move_group.plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
+  bool success = (move_group.plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
   RCLCPP_INFO(LOGGER, "Visualizing plan 2 (joint space goal) %s", success ? "" : "FAILED");
+
+  if (success){
+    success = (move_group.move() == moveit::core::MoveItErrorCode::SUCCESS);
+    RCLCPP_INFO(LOGGER, "Moving plan 2 (joint space goal) %s", success ? "" : "FAILED");
+  }
+  
 
   // Visualize the plan in RViz:
   visual_tools.deleteAllMarkers();
   visual_tools.publishText(text_pose, "Joint_Space_Goal", rvt::WHITE, rvt::XLARGE);
   visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-  visual_tools.trigger();
-  visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
-
   
 
   // END_TUTORIAL
